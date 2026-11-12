@@ -4,6 +4,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -87,6 +88,69 @@ class GitRangeTests(unittest.TestCase):
         base = self.commit("legacy invalid subject")
         head = self.commit("docs: add overview")
         self.assertEqual(self.invoke("--range", f"{base}..{head}"), 0)
+
+    def merge_topic(self, subject="docs: add topic", use_hook=False):
+        self.run_git("checkout", "-qb", "topic", self.base)
+        self.commit(subject)
+        self.run_git("checkout", "-")
+        self.commit("docs: update main")
+        hook_options = [] if use_hook else ["-c", "core.hooksPath=/dev/null"]
+        self.run_git(*hook_options, "merge", "--no-ff", "-m", "Merge branch 'topic'", "topic")
+        return self.run_git("rev-parse", "HEAD")
+
+    def install_hook(self):
+        scripts = self.repo / "scripts"
+        scripts.mkdir()
+        shutil.copy2(SCRIPT, scripts / SCRIPT.name)
+        hooks = self.repo / ".git" / "hooks"
+        shutil.copy2(SCRIPT.parents[1] / ".githooks" / "commit-msg", hooks / "commit-msg")
+        (hooks / "commit-msg").chmod(0o755)
+        self.run_git("config", "core.hooksPath", str(hooks))
+
+    def test_merge_subject_is_ignored(self):
+        head = self.merge_topic()
+        subjects = policy.range_subjects(self.repo, f"{self.base}..{head}")
+        self.assertEqual(len(subjects), 2)
+        self.assertNotIn(head, [sha for sha, _ in subjects])
+        self.assertEqual(self.invoke("--range", f"{self.base}..{head}"), 0)
+
+    def test_merge_does_not_hide_invalid_commits_on_its_other_parent(self):
+        head = self.merge_topic("bad topic subject")
+        self.assertEqual(self.invoke("--range", f"{self.base}..{head}"), 1)
+
+    def test_merge_prefix_does_not_exempt_regular_commit(self):
+        head = self.commit("Merge branch 'main'")
+        self.assertEqual(self.invoke("--range", f"{self.base}..{head}"), 1)
+
+    def test_merge_only_range_passes_but_pr_title_is_still_checked(self):
+        base = self.commit("docs: add overview")
+        # Both parents are already reachable from base; only the merge is new.
+        head = self.run_git("commit-tree", "HEAD^{tree}", "-p", base, "-p", self.base,
+                            "-m", "Combine histories")
+        self.assertEqual(policy.range_subjects(self.repo, f"{base}..{head}"), [])
+        self.assertEqual(self.invoke("--range", f"{base}..{head}"), 0)
+        event = self.repo / "event.json"
+        data = {"pull_request": {
+            "title": "Merge branch 'topic'", "base": {"sha": base}, "head": {"sha": head},
+        }}
+        event.write_text(json.dumps(data), encoding="utf-8")
+        self.assertEqual(self.invoke("--event-file", str(event)), 1)
+        data["pull_request"]["title"] = "chore: synchronize histories"
+        event.write_text(json.dumps(data), encoding="utf-8")
+        self.assertEqual(self.invoke("--event-file", str(event)), 0)
+
+    def test_hook_allows_actual_merge(self):
+        self.install_hook()
+        self.merge_topic(use_hook=True)
+
+    def test_hook_rejects_regular_commit_with_merge_prefix(self):
+        self.install_hook()
+        result = subprocess.run(
+            ["git", "-C", str(self.repo), "commit", "--allow-empty", "-qm", "Merge branch 'main'"],
+            text=True, capture_output=True, timeout=5,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Invalid commit message", result.stderr)
 
     def test_empty_or_ambiguous_ranges_fail_closed(self):
         for revision_range in (f"{self.base}..{self.base}", "main...HEAD", "HEAD", "--all..HEAD"):
