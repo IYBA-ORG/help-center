@@ -63,18 +63,37 @@ gh api --method PATCH repos/IYBA-ORG/help-center \
   -F allow_rebase_merge=true
 ```
 
-If the main ruleset does not already exist, create it once:
+Two rulesets separate required checks from review approval. The main ruleset
+requires a pull request, resolved review conversations, both checks, and linear
+history, with no bypass actors. The review ruleset requires one approving review
+and grants `Vercryger` (GitHub user ID `3949146`) a bypass for pull requests only.
+This bypass does not allow direct pushes or bypass required checks.
+
+For a new repository, create the review ruleset first, then the main ruleset:
 
 ```bash
+gh api --method POST repos/IYBA-ORG/help-center/rulesets \
+  -H 'X-GitHub-Api-Version: 2026-03-10' \
+  --input .github/rulesets/main-reviews.json
+
 gh api --method POST repos/IYBA-ORG/help-center/rulesets \
   --input .github/rulesets/main.json
 ```
 
 These configuration calls normally take seconds. Do not repeatedly POST the
-ruleset; update an existing ruleset by its ID instead. Success: the active
-ruleset targets `main`, has no bypass actors, prevents deletion and force
-pushes, requires linear history and one approving review, and requires
-**Content and build** plus **Conventional commits** from GitHub Actions.
+rulesets; update existing rulesets by ID with `PUT` instead. When migrating an
+existing combined ruleset, create the review ruleset before setting the main
+ruleset's approval count to zero. Both active rulesets target `main`; together
+they preserve review requirements for other contributors, prevent deletion and
+force pushes, require linear history, and require **Content and build** plus
+**Conventional commits** from GitHub Actions.
+
+The active repository ruleset IDs are `27153910` (main protections) and
+`27156701` (review approval).
+
+To use the approval bypass, `Vercryger` opens the PR merge controls and chooses
+to bypass the review requirement. Both required checks must pass and review
+conversations must be resolved.
 
 Verify in [repository rules](https://github.com/IYBA-ORG/help-center/settings/rules)
 or inspect the effective rules once:
@@ -83,9 +102,15 @@ or inspect the effective rules once:
 gh api repos/IYBA-ORG/help-center/rules/branches/main
 ```
 
-The PR checks validate both the title and every new commit subject. Release
-Please's generated `chore(main): release ...` subject follows the same policy;
+The PR checks validate both the title and every new non-merge commit subject.
+Merge commits are ignored based on their parent count; regular commits introduced
+through merges are still checked. Release Please's generated
+`chore(main): release ...` subject follows the same policy;
 the bot has no exemption. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+The commit checker is loaded from the target branch. Changes to that policy must
+land on `main` before other PRs can use them. After a policy fix lands, update an
+affected branch from `main` so its next check uses the new policy.
 
 ## 3. Enable GitHub Pages
 

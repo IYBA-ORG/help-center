@@ -1,6 +1,6 @@
 # Contributing to the IYBA Help Center
 
-**Conventional Commits are required for every commit and every pull request
+**Conventional Commits are required for every non-merge commit and every pull request
 title.** This applies to documentation, code, assets, automation, dependency
 updates, and reverts. The automated check rejects nonconforming messages.
 
@@ -21,8 +21,11 @@ type(optional-scope): concise description
   trailing whitespace. Use an imperative description such as “add” or “correct”.
 - Mark breaking changes with `!` before the colon and/or explain them in a
   `BREAKING CHANGE:` footer. Bodies and footers may span additional lines.
-- Automatic merge messages, default `Revert "..."` messages, and bot commits
-  have no exemption. Use a conventional `revert: ...` subject for a revert.
+- Merge commits are ignored. CI identifies them by having two or more parents,
+  not by their subject. A regular commit starting with `Merge` still needs a
+  conventional subject. PR titles are always checked.
+- Default `Revert "..."` messages and non-merge bot commits have no exemption.
+  Use a conventional `revert: ...` subject for a revert.
 
 Examples:
 
@@ -43,11 +46,13 @@ Enable the local hook once per clone (Python 3.11+ is required):
 git config core.hooksPath .githooks
 ```
 
-The `commit-msg` hook checks messages before the commit is created. A local hook
+The `commit-msg` hook checks messages before the commit is created and skips
+merges in progress, identified by Git's `MERGE_HEAD` file. A local hook
 can be bypassed, so it is not the authoritative enforcement mechanism. The
-**Conventional commits** CI job checks the PR title and **every commit added by
-the PR**, using the checker from the target branch. Editing the PR title reruns
-the check. Renaming only the PR does not repair invalid commits.
+**Conventional commits** CI job checks the PR title and **every non-merge commit
+added by the PR**, including commits introduced through merges, using the checker
+from the target branch. Editing the PR title reruns the check. Renaming only the
+PR does not repair invalid commits.
 
 Check a title or branch locally:
 
@@ -58,17 +63,22 @@ python3 scripts/validate-commits.py --range origin/main..HEAD
 
 For the most recent unpushed commit, use `git commit --amend` to correct its
 message. Coordinate changes to shared history with its contributors.
-When updating a feature branch from `main`, rebase it; a generated merge commit
-would fail the same subject check.
+When updating a feature branch from `main`, you may rebase or merge it. The
+generated merge commit is exempt; the regular commits introduced by it are still
+checked.
 
 Use **Rebase and merge** so the checked commit subjects are preserved on `main`.
 Squash merging is disabled because its final subject can be edited after CI;
-merge commits are disabled because their generated messages break this policy.
+merge commits on `main` are disabled to preserve its linear history. This does
+not prevent merging `main` into a feature branch.
 Repository maintainers must activate the
 [main ruleset](.github/rulesets/main.json) and configure rebase-only merging as
 described in [deployment setup](maintenance/deployment.md). Until that remote
 setup is applied, CI reports failures but GitHub does not necessarily block a
-merge. The ruleset requires both checks and one approving review.
+merge. The main ruleset requires both checks and a pull request. A separate
+[review ruleset](.github/rulesets/main-reviews.json) requires one approving review
+and allows `Vercryger` to bypass that approval when merging a pull request.
+Required checks, resolved review conversations, and branch protections still apply.
 
 ## Local setup
 
@@ -95,7 +105,8 @@ author or build the documentation locally.
 5. Add the page to the explicit `nav` in `zensical.toml` and its category index.
 6. Validate and preview the change, then open a pull request with a conventional
    title and describe how the product behavior was verified.
-7. Obtain a product-knowledgeable review and pass both required checks before
+7. Obtain a product-knowledgeable review (or the configured maintainer approval
+   bypass) and pass both required checks before
    merging. A merge to `main` updates the pending release; it does not deploy.
    Publication happens only after a stable GitHub release is made.
 
