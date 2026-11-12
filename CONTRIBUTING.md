@@ -68,7 +68,10 @@ Repository maintainers must activate the
 [main ruleset](.github/rulesets/main.json) and configure rebase-only merging as
 described in [deployment setup](maintenance/deployment.md). Until that remote
 setup is applied, CI reports failures but GitHub does not necessarily block a
-merge. The ruleset requires both checks and one approving review.
+merge. The main ruleset requires both checks and a pull request. A separate
+[review ruleset](.github/rulesets/main-reviews.json) requires one approving review
+and allows `Vercryger` to bypass that approval when merging a pull request.
+Required checks, resolved review conversations, and branch protections still apply.
 
 ## Local setup
 
@@ -95,7 +98,8 @@ author or build the documentation locally.
 5. Add the page to the explicit `nav` in `zensical.toml` and its category index.
 6. Validate and preview the change, then open a pull request with a conventional
    title and describe how the product behavior was verified.
-7. Obtain a product-knowledgeable review and pass both required checks before
+7. Obtain a product-knowledgeable review (or the configured maintainer approval
+   bypass) and pass both required checks before
    merging. A merge to `main` updates the pending release; it does not deploy.
    Publication happens only after a stable GitHub release is made.
 
