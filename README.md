@@ -37,7 +37,8 @@ Open the URL printed by Zensical. To produce portable static output, run
 `zensical build --strict`; success produces `site/index.html` and product pages.
 Python is used for building and validation, not by visitors to the published site.
 
-Every commit and PR title **must follow Conventional Commits**. Start with
+Every non-merge commit and PR title **must follow Conventional Commits**. Merge
+commits are ignored. Start with
 [CONTRIBUTING.md](CONTRIBUTING.md) for the exact policy, examples, hooks, article
 standards, and review process.
 

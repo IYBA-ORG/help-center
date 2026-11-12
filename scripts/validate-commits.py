@@ -18,7 +18,7 @@ MAX_LENGTH = 100
 
 
 def validate_subject(subject: str) -> list[str]:
-    """Return every applicable subject error; do not exempt merge/bot commits."""
+    """Validate a regular commit subject or PR title without text-based exemptions."""
     errors = []
     if not SUBJECT.fullmatch(subject):
         errors.append("expected type(scope): description; scope is optional and kebab-case")
@@ -54,10 +54,14 @@ def range_subjects(repo: Path, revision_range: str) -> list[tuple[str, str]]:
     base, head = revision_range.split("..")
     base_sha = resolve_commit(repo, base)
     head_sha = resolve_commit(repo, head)
-    output = git(repo, "log", "--format=%H%x00%s", f"{base_sha}..{head_sha}", "--")
-    commits = [tuple(line.split("\0", 1)) for line in output.splitlines()]
-    if not commits:
+    output = git(repo, "log", "--format=%H%x00%P%x00%s", f"{base_sha}..{head_sha}", "--")
+    if not output:
         raise ValueError("commit range is empty; refusing to report an unchecked range as valid")
+    commits = []
+    for line in output.splitlines():
+        sha, parents, subject = line.split("\0", 2)
+        if len(parents.split()) < 2:
+            commits.append((sha, subject))
     return commits
 
 
@@ -79,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo", type=Path, default=Path.cwd(), help="Git checkout to inspect")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--message-file", type=Path, help="commit-msg hook message file")
-    source.add_argument("--range", dest="revision_range", help="inspect every commit in BASE..HEAD")
+    source.add_argument("--range", dest="revision_range", help="inspect non-merge commits in BASE..HEAD")
     source.add_argument("--event-file", type=Path, help="GitHub pull_request event JSON")
     source.add_argument("--title", help="validate one subject or PR title")
     args = parser.parse_args(argv)
@@ -110,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     if failed:
         print("See CONTRIBUTING.md. Example: docs(boatdox): add deal overview", file=sys.stderr)
         return 1
-    print(f"Conventional Commits: {len(subjects)} subject(s) passed.")
+    print(f"Conventional Commits: {len(subjects)} subject(s) passed; merge commits are ignored.")
     return 0
 
 

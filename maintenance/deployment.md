@@ -83,9 +83,15 @@ or inspect the effective rules once:
 gh api repos/IYBA-ORG/help-center/rules/branches/main
 ```
 
-The PR checks validate both the title and every new commit subject. Release
-Please's generated `chore(main): release ...` subject follows the same policy;
+The PR checks validate both the title and every new non-merge commit subject.
+Merge commits are ignored based on their parent count; regular commits introduced
+through merges are still checked. Release Please's generated
+`chore(main): release ...` subject follows the same policy;
 the bot has no exemption. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+The commit checker is loaded from the target branch. Changes to that policy must
+land on `main` before other PRs can use them. After a policy fix lands, update an
+affected branch from `main` so its next check uses the new policy.
 
 ## 3. Enable GitHub Pages
 
