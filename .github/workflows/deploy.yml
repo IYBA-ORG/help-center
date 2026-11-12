@@ -1,0 +1,71 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize releases and reject stale commits immediately before upload.
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: Deploy to Cloudflare Pages
+    # Repository variable stays unset until hosting and secrets are configured.
+    if: github.ref == 'refs/heads/main' && vars.DEPLOYMENTS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://help.iyba.org
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check hosting configuration
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Configure the production CLOUDFLARE_API_TOKEN secret.'; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Configure the production CLOUDFLARE_ACCOUNT_ID secret.'; exit 1; }
+          test -n "$CLOUDFLARE_PAGES_PROJECT" || { echo 'Configure the CLOUDFLARE_PAGES_PROJECT variable.'; exit 1; }
+      - name: Install pinned generator
+        run: python -m pip install -r requirements.txt
+      - name: Validate and build the release
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py'
+          python scripts/validate-content.py
+          zensical build --strict
+      - name: Reject a superseded release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current_main_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          if [ "$current_main_sha" != "$GITHUB_SHA" ]; then
+            echo 'This commit is no longer the head of main. Publish the latest main workflow instead.'
+            exit 1
+          fi
+      - name: Publish static output
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+        run: >-
+          npx --yes wrangler@4.161.0 pages deploy site
+          --project-name "$CLOUDFLARE_PAGES_PROJECT"
+          --branch main
+          --commit-hash "$GITHUB_SHA"

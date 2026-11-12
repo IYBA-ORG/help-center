@@ -1,0 +1,2 @@
+# Upgrade deliberately and verify the strict build before merging.
+zensical==0.1.1

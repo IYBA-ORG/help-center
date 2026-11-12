@@ -1,0 +1,162 @@
+[project]
+site_name = "IYBA Help Center"
+site_url = "https://help.iyba.org/"
+site_description = "Product documentation and support for IYBA, YachtBroker, and BoatDox"
+site_author = "International Yacht Brokers Association"
+copyright = "International Yacht Brokers Association"
+docs_dir = "docs"
+site_dir = "site"
+use_directory_urls = true
+strict = true
+extra_css = ["stylesheets/extra.css"]
+
+# Every published article belongs to one product or the shared Support section.
+nav = [
+  { "Home" = "index.md" },
+  { "IYBA" = [
+    "iyba/index.md",
+    { "Getting Started" = [
+      "iyba/getting-started/index.md",
+      { "Account Access" = "iyba/getting-started/account-access.md" },
+      { "Profile Management" = "iyba/getting-started/profile-management.md" },
+    ] },
+    { "Membership" = [
+      "iyba/membership/index.md",
+      { "Membership Overview" = "iyba/membership/membership-overview.md" },
+      { "Managing Membership Information" = "iyba/membership/managing-membership-information.md" },
+    ] },
+    { "Website Features" = [
+      "iyba/features/index.md",
+      { "Feature Guides" = "iyba/features/feature-guides.md" },
+    ] },
+    { "Troubleshooting" = [
+      "iyba/troubleshooting/index.md",
+      { "Frequently Asked Questions" = "iyba/troubleshooting/frequently-asked-questions.md" },
+    ] },
+  ] },
+  { "YachtBroker" = [
+    "yachtbroker/index.md",
+    { "Getting Started" = [
+      "yachtbroker/getting-started/index.md",
+      { "Account Access" = "yachtbroker/getting-started/account-access.md" },
+      { "Dashboard Overview" = "yachtbroker/getting-started/dashboard-overview.md" },
+    ] },
+    { "Vessel Listings" = [
+      "yachtbroker/listings/index.md",
+      { "Creating Listings" = "yachtbroker/listings/creating-listings.md" },
+      { "Editing Listings" = "yachtbroker/listings/editing-listings.md" },
+      { "Managing Listing Status" = "yachtbroker/listings/managing-listing-status.md" },
+      { "Uploading Images" = "yachtbroker/listings/uploading-images.md" },
+    ] },
+    { "Brokerage Management" = [
+      "yachtbroker/brokerage/index.md",
+      { "Brokerage Profiles" = "yachtbroker/brokerage/brokerage-profiles.md" },
+      { "Broker Profiles" = "yachtbroker/brokerage/broker-profiles.md" },
+    ] },
+    { "Leads & Inquiries" = [
+      "yachtbroker/leads/index.md",
+      { "Managing Inquiries" = "yachtbroker/leads/managing-inquiries.md" },
+      { "Lead Management" = "yachtbroker/leads/lead-management.md" },
+    ] },
+    { "Troubleshooting" = [
+      "yachtbroker/troubleshooting/index.md",
+      { "Frequently Asked Questions" = "yachtbroker/troubleshooting/frequently-asked-questions.md" },
+    ] },
+  ] },
+  { "BoatDox" = [
+    "boatdox/index.md",
+    { "Getting Started" = [
+      "boatdox/getting-started/index.md",
+      { "Creating an Account" = "boatdox/getting-started/creating-an-account.md" },
+      { "Signing In" = "boatdox/getting-started/signing-in.md" },
+      { "Dashboard Overview" = "boatdox/getting-started/dashboard-overview.md" },
+    ] },
+    { "Deal Management" = [
+      "boatdox/deals/index.md",
+      { "Creating a Deal" = "boatdox/deals/creating-a-deal.md" },
+      { "Managing Participants" = "boatdox/deals/managing-participants.md" },
+      { "Updating Deal Information" = "boatdox/deals/updating-deal-information.md" },
+      { "Closing a Deal" = "boatdox/deals/closing-a-deal.md" },
+    ] },
+    { "Documents" = [
+      "boatdox/documents/index.md",
+      { "Document Templates" = "boatdox/documents/document-templates.md" },
+      { "Preparing Documents" = "boatdox/documents/preparing-documents.md" },
+      { "Sending for Signature" = "boatdox/documents/sending-for-signature.md" },
+      { "Managing Signed Documents" = "boatdox/documents/managing-signed-documents.md" },
+    ] },
+    { "CRM" = [
+      "boatdox/crm/index.md",
+      { "Managing Contacts" = "boatdox/crm/managing-contacts.md" },
+      { "Contact Management" = "boatdox/crm/contact-management.md" },
+    ] },
+    { "Team Management" = [
+      "boatdox/teams/index.md",
+      { "Managing Team Members" = "boatdox/teams/managing-team-members.md" },
+      { "Access and Permissions" = "boatdox/teams/access-and-permissions.md" },
+    ] },
+    { "Mobile Application" = [
+      "boatdox/mobile/index.md",
+      { "Getting Started" = "boatdox/mobile/getting-started.md" },
+      { "Available Features" = "boatdox/mobile/available-features.md" },
+    ] },
+    { "Troubleshooting" = [
+      "boatdox/troubleshooting/index.md",
+      { "Frequently Asked Questions" = "boatdox/troubleshooting/frequently-asked-questions.md" },
+    ] },
+  ] },
+  { "Support" = [
+    "support/index.md",
+    { "Contact Support" = "support/contact.md" },
+    { "Frequently Asked Questions" = "support/frequently-asked-questions.md" },
+    { "Product Resources" = "support/product-resources.md" },
+  ] },
+]
+
+[project.theme]
+language = "en"
+variant = "classic"
+logo = "assets/branding/iyba-logo-white.png"
+font = false
+features = [
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+# Zensical's built-in search is enabled by default and indexes all products.
+# Do not add an external search service or MkDocs-specific search settings.
+[project.validation]
+invalid_links = true
+invalid_link_anchors = true
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+tables = {}
+"pymdownx.details" = {}
+"pymdownx.superfences" = {}
+
+[project.markdown_extensions.toc]
+permalink = true
