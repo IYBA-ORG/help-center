@@ -55,6 +55,7 @@ nav = [
     ] },
     { "Leads & Inquiries" = [
       "yachtbroker/leads/index.md",
+      { "Outbound Leads" = "yachtbroker/leads/outbound-leads.md" },
       { "Managing Inquiries" = "yachtbroker/leads/managing-inquiries.md" },
       { "Lead Management" = "yachtbroker/leads/lead-management.md" },
     ] },

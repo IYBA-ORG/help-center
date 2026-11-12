@@ -1,17 +1,21 @@
 ---
 title: "Leads & Inquiries — YachtBroker"
-description: "YachtBroker documentation topics for leads & inquiries."
+description: "Connect Yachtr inquiries to your CRM and find YachtBroker lead management resources."
 ---
 
 # Leads & Inquiries — YachtBroker
 
-Help with inquiries and lead management.
+Help with inquiries, CRM delivery, and lead management.
+
+## Guides
+
+- **[Outbound Leads](outbound-leads.md)** — Connect Yachtr inquiries to your CRM, map fields, test delivery, and resolve failures.
+
+## Planned guides
 
 !!! info "Guides in preparation"
 
-    These topics are planned for YachtBroker. Verified instructions will be added as each guide is reviewed.
-
-## Planned guides
+    The topics below are planned for YachtBroker. Instructions will be added as each guide is reviewed.
 
 - [Managing Inquiries](managing-inquiries.md)
 - [Lead Management](lead-management.md)
