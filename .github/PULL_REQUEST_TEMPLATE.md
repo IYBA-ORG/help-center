@@ -9,7 +9,7 @@ not run, explain why and give the command needed to run it.
 
 ## Checklist
 
-- [ ] Every commit and this PR title follow the Conventional Commits policy in CONTRIBUTING.md.
+- [ ] Every non-merge commit and this PR title follow the Conventional Commits policy in CONTRIBUTING.md.
 - [ ] Product instructions match the current interface and were verified by a product reviewer.
 - [ ] New pages use lowercase kebab-case paths and are included in `zensical.toml` navigation.
 - [ ] Internal links resolve; images have descriptive alternative text.

@@ -1,4 +1,8 @@
 #!/bin/sh
 set -eu
+if test -f "$(git rev-parse --git-path MERGE_HEAD)"; then
+    printf '%s\n' 'Conventional Commits: merge commit skipped.'
+    exit 0
+fi
 repository_root=$(git rev-parse --show-toplevel)
 exec python3 "$repository_root/scripts/validate-commits.py" --message-file "$1"
