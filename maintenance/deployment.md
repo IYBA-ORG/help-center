@@ -1,21 +1,26 @@
-# Hosting, repository policy, and first release
+# GitHub Pages, repository policy, and releases
 
-Use this runbook to publish the help center at `help.iyba.org`. Complete local
-verification and the initial GitHub push first, then activate repository rules
-and configure Cloudflare. Deployment is disabled until the repository variable
-`DEPLOYMENTS_ENABLED` is explicitly set to `true`.
+The default public address is `https://iyba-org.github.io/help-center/`.
+Publishing uses GitHub Pages and Release Please. Ordinary merges update the
+pending release PR; they do not deploy the site. A published stable GitHub
+release is required before deployment can run.
 
-The initial publication must put the trusted commit checker on `main` before
-contributors open PRs. Skip bootstrap commands if that initial commit has
-already been pushed; do not repeat one-time setup blindly.
+Commands below run from the **help-center repository root**:
 
-Commands below run from the **help-center repository root**. The original local
-checkout is `/Users/vercryger/Code/FoundationalTeam/IYBA/help-center`.
-Estimates are not deadlines; network and provider timing vary. Under an agent
-execution policy limiting operations to 60 seconds, run longer operations
-yourself or explicitly authorize their exact commands and waiting. CI and
-provider jobs run asynchronously; use the linked dashboards or one-shot status
-commands instead of polling.
+```bash
+cd /Users/vercryger/Code/FoundationalTeam/IYBA/help-center
+```
+
+The initial source must already be on `main` before activating the ruleset or
+opening PRs, because commit validation uses the policy from the target branch.
+Check existing settings before repeating one-time setup. These instructions
+describe the required configuration; checked-in files alone do not prove the
+remote settings have been applied.
+
+Estimates are not deadlines. Under the 60-second execution policy, run longer
+commands yourself or explicitly authorize the specific command and waiting.
+Do not watch or poll CI or provider jobs; use their URLs and one-shot status
+commands. Creating or merging a release PR is a separate publication decision.
 
 ## 1. Verify the source locally
 
@@ -31,51 +36,25 @@ python scripts/validate-content.py
 zensical build --strict
 ```
 
-Success: tests, validation, and the strict build exit zero; `site/index.html`,
-`site/iyba/index.html`, `site/yachtbroker/index.html`, and
-`site/boatdox/index.html` exist. First build budget: 1–2 minutes.
+Success: tests, content validation, and the strict build exit zero, and
+`site/index.html` plus the product pages exist. The first build can take
+1–2 minutes. Python is only a build and validation dependency.
+
+For a browser preview of the generated files:
 
 ```bash
 python -m http.server 8000 --bind 127.0.0.1 --directory site
 ```
 
-The server stays running until Ctrl-C. Open `http://127.0.0.1:8000/` to inspect
-the actual built output. Allow about five minutes to verify
-the three cards, all product tabs/sidebars, mobile navigation, light/dark mode,
-and search results across all products. For search, try “membership”, “vessel”,
-and “deal” and follow results. Stop the server before continuing.
+Open `http://127.0.0.1:8000/`. Allow about five minutes to check product cards,
+sidebars, mobile navigation, light/dark modes, and search for “membership”,
+“vessel”, and “deal”. Follow the search results. The server runs until Ctrl-C.
+Check the hosted build again after release, since its `/help-center/` base path
+differs from a root-level local preview.
 
-## 2. Bootstrap the empty repository
+## 2. Activate mandatory Conventional Commits and reviews
 
-After local verification, leave `DEPLOYMENTS_ENABLED` unset or set to `false`:
-
-```bash
-git add .
-git commit -m 'feat: establish help center foundation and documentation structure'
-git push -u origin main
-```
-
-Expected: push may take 1–2 minutes; GitHub validation may take 2–5 minutes
-afterward. The push starts `Validate`; the `Deploy` workflow's production job
-is skipped because deployment has not been enabled. Cloudflare configuration
-is not required for this push.
-
-View [Actions](https://github.com/IYBA-ORG/help-center/actions) and use this
-one-shot status command when needed:
-
-```bash
-gh run list --repo IYBA-ORG/help-center --limit 5
-```
-
-Success: the commit is present on GitHub `main`, `Validate` completes
-successfully, and the production deployment job is skipped. These results
-establish the source and CI; they do not mean a public website is deployed.
-
-## 3. Activate mandatory Conventional Commits and reviews
-
-Configure rebase-only merging so the exact commit subjects validated by CI
-reach `main`. Squash merging allows editing a new subject after CI and is
-therefore disabled, as are generated merge commits:
+Configure rebase-only merging so the commit subjects checked by CI are preserved:
 
 ```bash
 gh api --method PATCH repos/IYBA-ORG/help-center \
@@ -84,165 +63,175 @@ gh api --method PATCH repos/IYBA-ORG/help-center \
   -F allow_rebase_merge=true
 ```
 
-Create the checked-in main ruleset **after the bootstrap push**:
+If the main ruleset does not already exist, create it once:
 
 ```bash
 gh api --method POST repos/IYBA-ORG/help-center/rulesets \
   --input .github/rulesets/main.json
 ```
 
-These are one-time configuration calls, normally seconds. Do not repeatedly
-POST the ruleset: subsequent updates use PUT with its returned ID. Success:
-the active ruleset targets `main`, has no bypass actors, prevents deletion and
-force pushes, requires linear history and one approving review, and requires
+These configuration calls normally take seconds. Do not repeatedly POST the
+ruleset; update an existing ruleset by its ID instead. Success: the active
+ruleset targets `main`, has no bypass actors, prevents deletion and force
+pushes, requires linear history and one approving review, and requires
 **Content and build** plus **Conventional commits** from GitHub Actions.
-Confirm in [repository rules](https://github.com/IYBA-ORG/help-center/settings/rules).
 
-Check activation without watching a job:
+Verify in [repository rules](https://github.com/IYBA-ORG/help-center/settings/rules)
+or inspect the effective rules once:
 
 ```bash
 gh api repos/IYBA-ORG/help-center/rules/branches/main
 ```
 
-The `Conventional commits` PR workflow checks both the PR title and all new
-commit subjects. It executes the validator from the base branch, so modifying
-the checker inside a PR cannot make that same PR evade validation. Local hooks
-provide immediate feedback but are not the merge gate. See
-[CONTRIBUTING.md](../CONTRIBUTING.md) for the exact message policy.
+The PR checks validate both the title and every new commit subject. Release
+Please's generated `chore(main): release ...` subject follows the same policy;
+the bot has no exemption. See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-Use a short-lived PR to verify both required status checks appear; an invalid
-title or commit should block merging. Correct it before merging. Administrators
-can change repository settings, so maintain ownership of the ruleset as part of
-normal repository administration.
+## 3. Enable GitHub Pages
 
-## 4. Create the Cloudflare Pages project
+Open [Settings → Pages](https://github.com/IYBA-ORG/help-center/settings/pages).
+Under **Build and deployment**, set **Source** to **GitHub Actions**. Do not
+choose branch-based publishing: the release workflow uploads the built site.
 
-Use a **Direct Upload** Pages project with production branch `main`; GitHub
-Actions owns the build and upload. Do not also connect Cloudflare Git builds,
-which would create a second deployment path. Static build output is `site/`.
+In [Settings → Environments](https://github.com/IYBA-ORG/help-center/settings/environments),
+create or open `github-pages`. Set **Deployment branches and tags** to
+**Selected branches and tags**, then add these two separate policies:
 
-With Node 22.12+ and access to the intended Cloudflare account, run:
+| Ref type | Pattern | Purpose |
+| --- | --- | --- |
+| Branch | `main` | Release Please's deployment in the same workflow run |
+| Tag | `v*` | Deployment triggered by a published release event |
 
-```bash
-npx --yes wrangler@4.161.0 login
-npx --yes wrangler@4.161.0 pages project create iyba-help-center --production-branch main
-```
+Use separate branch and tag entries; a branch rule does not grant tag access.
+Do not select “Protected branches only”, which would block the tag path. No
+environment secret is needed. See GitHub's
+[environment configuration](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+and [Pages workflow requirements](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
-Login is interactive and project creation may take 1–3 minutes including the
-first CLI download. Success: Cloudflare lists a Pages project named
-`iyba-help-center` with production branch `main`. If using an existing project
-or the name is unavailable, use its actual name in the GitHub variable below.
-This step creates the destination; it does not upload the site.
+Setup normally takes a few minutes. Success: Pages shows GitHub Actions as its
+source and `github-pages` allows the two expected ref patterns. There may be no
+live website until the first release deploys.
 
-Create an API token restricted to the intended account with **Account →
-Cloudflare Pages → Edit** permission. Obtain the account ID from Cloudflare.
-Do not put the token in a command argument, file, commit, or chat. See the
-[Cloudflare CI deployment guide](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/).
+## 4. Allow Release Please to open pull requests
 
-## 5. Configure the GitHub production environment
+In [Settings → Actions → General](https://github.com/IYBA-ORG/help-center/settings/actions),
+under **Workflow permissions**, enable **Allow GitHub Actions to create and
+approve pull requests**. The organization may need to permit this setting first.
+The workflow itself grants write permissions only to its release-management job;
+it does not approve its own release PR.
 
-Create the `production` environment in
-[repository environments](https://github.com/IYBA-ORG/help-center/settings/environments).
-Allow deployments only from `main`. Add these environment secrets using the
-GitHub UI or these interactive, hidden-input commands:
+Release Please uses the built-in `GITHUB_TOKEN`; no personal access token or
+additional secret is required. When GitHub shows **Approve workflows to run**
+on a bot-created or updated release PR, a user with write access must approve
+the runs so the required checks can execute. This is separate from approving the
+PR's changes. See GitHub's
+[workflow trigger behavior](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
-```bash
-gh secret set CLOUDFLARE_API_TOKEN --env production --repo IYBA-ORG/help-center
-gh secret set CLOUDFLARE_ACCOUNT_ID --env production --repo IYBA-ORG/help-center
-gh variable set CLOUDFLARE_PAGES_PROJECT --body iyba-help-center --repo IYBA-ORG/help-center
-```
+The release configuration uses the `simple` strategy, maintains `version.txt`
+and `CHANGELOG.md`, and initially has an empty version manifest. `0.0.0` in
+`version.txt` is the pre-release baseline, not a published release. The first
+release PR targets `1.0.0`. Visible documentation changelog entries make
+documentation-only changes eligible for patch releases after that.
 
-Success: both secret **names** appear in the environment and the repository
-variable matches the Pages project name. No secret value should be printed.
-Configure these before enabling production deployment. These interactive
-configuration steps normally take a few minutes.
+## 5. Publish the first release
 
-## 6. Enable and run the first production deployment
+Once the workflows are on `main` and the settings above are ready:
 
-Set the switch as a **repository variable**, not an environment variable. The
-job condition evaluates before the production environment is loaded, so an
-environment-level switch would not enable the job.
+1. Merge reviewed changes into `main`. The push runs validation and Release
+   Please, which creates or refreshes a PR such as `chore(main): release 1.0.0`.
+2. Open the release PR. Review the version, changelog, and included changes.
+   If GitHub requests workflow approval, choose **Approve workflows to run**.
+3. Wait outside a restricted agent session for **Content and build** and
+   **Conventional commits** to pass. Obtain the required approving review.
+4. Keep the bot PR as one commit and choose **Rebase and merge**. If it is behind
+   `main`, let Release Please refresh it; do not add a merge commit or manual
+   commits to the release branch.
+5. The resulting push lets Release Please publish tag `v1.0.0` and its GitHub
+   release. The successful release-creation output then calls the Pages workflow.
 
-After the Pages project, production secrets, and project variable are ready:
-
-```bash
-gh variable set DEPLOYMENTS_ENABLED --body true --repo IYBA-ORG/help-center
-gh workflow run deploy.yml --ref main --repo IYBA-ORG/help-center
-```
-
-Enabling the variable does not deploy by itself; the manual workflow dispatch
-starts the first release. Expected duration: 2–5 minutes. View
-[Actions](https://github.com/IYBA-ORG/help-center/actions) or run the one-shot
-status command from step 2. Do not watch or poll the job.
-
-Success: `Deploy` completes successfully and the project’s actual `pages.dev`
-URL serves the generated portal. Save that hostname for DNS setup. Check product
-navigation, direct article URLs, and search on this hosted build before attaching
-the custom domain.
-
-## 7. Attach the custom domain and DNS
-
-In Cloudflare Pages, open the project, choose **Custom domains**, and add
-`help.iyba.org`. Associate the hostname with the Pages project **before** creating
-its DNS record. At the existing DNS provider, set a CNAME for `help` to the
-project's actual `<project>.pages.dev` hostname returned by Cloudflare. If the
-zone is already in Cloudflare, use the record it creates for the project.
-
-Do not replace an existing `help` record without confirming its current use.
-Cloudflare provisions TLS after domain validation. DNS/certificate propagation
-can take minutes to hours; check later in the dashboard rather than polling.
-See [Cloudflare custom-domain setup](https://developers.cloudflare.com/pages/configuration/custom-domains/).
-
-Success: the domain is active, `https://help.iyba.org/` shows the portal with a
-valid certificate, and HTTP redirects to HTTPS. Check direct article URLs,
-global search, and that an unknown route returns the generated 404 page.
-The canonical URL is already set in `zensical.toml`.
-
-## Releases and rollback
-
-While `DEPLOYMENTS_ENABLED` is `true`, merging an approved PR into `main`
-starts production deployment. It checks
-required hosting configuration, installs pinned Zensical, runs validation and
-tests, builds with `--strict`, and uploads only the static `site/` directory with
-pinned Wrangler. Pull requests never receive deployment secrets. PR builds
-retain static artifacts for review; automatic hosted PR previews are not set up.
-
-To redeploy the current main branch after correcting hosting configuration:
+Each automation run generally takes 2–5 minutes. Follow
+[Actions](https://github.com/IYBA-ORG/help-center/actions),
+[pull requests](https://github.com/IYBA-ORG/help-center/pulls), and
+[releases](https://github.com/IYBA-ORG/help-center/releases), or inspect once:
 
 ```bash
-gh workflow run deploy.yml --ref main --repo IYBA-ORG/help-center
+gh run list --repo IYBA-ORG/help-center --limit 5
+gh pr list --repo IYBA-ORG/help-center --base main
+gh release list --repo IYBA-ORG/help-center --limit 5
 ```
 
-Expected duration: 2–5 minutes. Check the Actions URL or the one-shot status
-command above. Success is the completed deployment and the correct content at
-the production URL.
+Success: a stable `v1.0.0` release exists, its deployment succeeds, and
+`https://iyba-org.github.io/help-center/` serves the portal. Verify product
+navigation, direct article URLs, images, and search on the hosted site.
+Do not infer deployment success from a successful merge or release creation.
 
-To prevent future deployment jobs from starting:
+## What can deploy
 
-```bash
-gh variable set DEPLOYMENTS_ENABLED --body false --repo IYBA-ORG/help-center
-```
+The normal path calls the reusable Pages workflow only when Release Please
+reports that it has created a release. This is intentional: a release created
+with `GITHUB_TOKEN` does not trigger a second workflow through the release event.
+The same-run call handles that case without another credential.
 
-This switch does **not** cancel a job already in progress and does not remove the
-currently published site. If a deployment is already running and must stop,
-cancel that specific run in GitHub Actions. To resume releases, set the variable
-back to `true`; dispatch `deploy.yml` to publish the current `main` immediately.
+The Pages workflow also handles **published** release events for stable releases
+created by a maintainer. Both entry paths verify the published release, resolve
+the tag's exact commit, and check that it belongs to `main` history. Only the
+GitHub-designated latest stable release may deploy. The tag and release are
+checked again before publishing so a stale rerun cannot replace a newer release.
 
-For an urgent rollback, select a previously successful production deployment in
-Cloudflare Pages and choose rollback. Then create a reviewed revert PR to make
-`main` match the intended release; use a `revert: ...` commit and PR title. A
-later merge would otherwise redeploy the content you rolled back. No database
-restore is involved. Test rollback with the hosting owner during phase 4.
+Ordinary pushes, tag-only pushes, drafts, and prereleases do not deploy. There
+is no manual dispatch that publishes arbitrary `main` content. The build uses
+the released commit rather than whatever happens to be at the tip of `main`.
+GitHub Pages' configured base URL is applied during the deployment build, so
+the default project path and an optional custom domain use the correct URLs.
+
+## Recovery and rollback
+
+If setup prevents deployment after a release was published, correct the setting
+and rerun the failed deployment job for that **same latest release** from the
+Actions UI. The release guard still applies. For a failed Release Please run
+that did not finish creating its release, correct its permissions and rerun that
+failed job. Do not watch or poll either run; check its result later.
+
+For a content rollback, open a reviewed revert PR with a conventional subject
+such as `revert: restore previous support navigation`. Merge it, then review and
+merge the next Release Please PR. This produces a new version containing the
+reverted content. Do not move published tags or rerun an old release to roll
+back. No database restore is involved.
+
+## Optional: use help.iyba.org
+
+The GitHub Pages address works without a custom domain. If adding `help.iyba.org`,
+confirm domain ownership and the current use of the `help` DNS record first.
+Verify the domain in the organization’s GitHub Pages settings where available.
+
+Add `help.iyba.org` under the repository's **Settings → Pages → Custom domain**
+before changing DNS. At the existing DNS provider, create the record:
+
+| Type | Name | Target |
+| --- | --- | --- |
+| CNAME | `help` | `iyba-org.github.io` |
+
+The target is the hostname only, with no protocol or `/help-center` path. This
+custom-workflow deployment does not require a committed `CNAME` file. Follow
+[GitHub's custom-domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+
+After propagation and certificate provisioning, enable **Enforce HTTPS** in
+Pages settings. DNS and HTTPS availability can take up to 24 hours; check later
+rather than polling. Update the source `site_url` to `https://help.iyba.org/` in
+a reviewed change and release it so local builds reflect the chosen domain too.
+Deployment already derives its canonical URL from the Pages configuration.
+
+Success: `https://help.iyba.org/` serves the released site with a valid certificate,
+HTTP redirects to HTTPS, and direct article links and search work.
 
 ## Launch checklist
 
-- [ ] Install the pinned generator and pass a strict build.
+- [ ] Install dependencies and pass tests, content validation, and a strict build.
 - [ ] Verify desktop/mobile layout, light/dark mode, and global search.
-- [ ] Publish the initial main branch, confirm validation success, and confirm deployment is skipped.
 - [ ] Apply rebase-only settings and the active required-check ruleset.
-- [ ] Configure Pages, environment secrets, and the project variable.
-- [ ] Set the repository deployment switch to `true` and verify the first hosted release.
-- [ ] Attach `help.iyba.org` and confirm DNS, TLS, and HTTPS redirect.
-- [ ] Verify a rejected nonconventional PR and a successful reviewed release.
+- [ ] Enable GitHub Actions publishing in Pages and configure `github-pages` ref policies.
+- [ ] Permit Release Please to create PRs and approve bot workflow runs when requested.
+- [ ] Review and merge the first release PR; verify the stable release and hosted site.
+- [ ] If desired, configure the custom domain, DNS, and HTTPS.
 
 Mark these complete only after observing the corresponding result.

@@ -1,6 +1,6 @@
 [project]
 site_name = "IYBA Help Center"
-site_url = "https://help.iyba.org/"
+site_url = "https://iyba-org.github.io/help-center/"
 site_description = "Product documentation and support for IYBA, YachtBroker, and BoatDox"
 site_author = "International Yacht Brokers Association"
 copyright = "International Yacht Brokers Association"

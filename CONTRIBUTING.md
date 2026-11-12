@@ -96,12 +96,35 @@ author or build the documentation locally.
 6. Validate and preview the change, then open a pull request with a conventional
    title and describe how the product behavior was verified.
 7. Obtain a product-knowledgeable review and pass both required checks before
-   merging. A merge to `main` starts production deployment after hosting setup.
+   merging. A merge to `main` updates the pending release; it does not deploy.
+   Publication happens only after a stable GitHub release is made.
 
 During phases 1 and 2, article pages intentionally say **Guide in preparation**.
 They reserve the proposed structure and URLs; they do not establish that the
 described feature exists. Replace a placeholder only after checking the actual
 product and obtaining review. Phase 3 owns verified instructions/screenshots.
+
+## Release workflow
+
+Release Please reads Conventional Commits on `main` and creates or updates a
+release PR, normally titled `chore(main): release 1.0.0`. It maintains
+`version.txt`, `.release-please-manifest.json`, and `CHANGELOG.md`. The initial
+release is `v1.0.0`; subsequent documentation-only changes can produce patch
+releases, features produce minor releases, and breaking changes produce major
+releases.
+
+Review the generated changelog and version, obtain the required approval, and
+use **Rebase and merge** when the checks pass. Keep the release PR as the bot's
+single commit: let Release Please refresh it when `main` advances, rather than
+adding manual commits or merging `main` into that branch. Correct content in an
+ordinary PR first so the bot includes the correction in the release.
+
+The workflow uses `GITHUB_TOKEN`. GitHub may show an **Approve workflows to run**
+banner on the bot's PR; a contributor with write access must approve those runs
+before the required checks can complete. Do not bypass the checks. A successful
+release PR merge lets Release Please publish a stable GitHub release and then
+deploy its tagged commit to Pages. Drafts and prereleases do not deploy. See
+[deployment setup](maintenance/deployment.md) for the release and recovery steps.
 
 ## Content and file conventions
 
@@ -165,5 +188,7 @@ external links and real product behavior; automated checks cannot do that.
 The PR template records product verification, screenshots, links, and checks.
 At least one reviewer must verify the customer-facing behavior. Do not publish
 credentials, customer records, internal engineering instructions, or unverified
-product steps. CI has no deployment secrets on pull requests. Production
-credentials belong in the GitHub `production` environment, never in Git.
+product steps. Pull request CI has read-only repository permissions. Release
+creation and Pages deployment receive their required permissions only in their
+respective jobs; no personal access token or external hosting secret is needed.
+Never commit credentials to this repository.

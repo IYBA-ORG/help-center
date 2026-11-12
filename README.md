@@ -1,7 +1,8 @@
 # IYBA Help Center
 
 A public documentation portal for IYBA, YachtBroker, and BoatDox, built with
-[Zensical](https://zensical.org/docs/) and intended for `https://help.iyba.org/`.
+[Zensical](https://zensical.org/docs/) and hosted on GitHub Pages. The default
+address is [iyba-org.github.io/help-center](https://iyba-org.github.io/help-center/).
 All content builds into static files; no application server, database, or
 customer login is required. Global search uses Zensical's built-in client-side
 engine.
@@ -13,13 +14,10 @@ with light/dark modes, global and product navigation, all proposed category and
 article paths, support resources, templates, content validation, and CI/CD.
 The 35 product article placeholders deliberately contain no unverified steps.
 
-Infrastructure setup is separate from the source implementation. A live portal
-requires active GitHub rules, a Cloudflare Pages project, production secrets,
-and DNS/TLS configuration. Follow [deployment setup](maintenance/deployment.md)
-after local verification and the initial push. The production job is skipped
-until the repository variable `DEPLOYMENTS_ENABLED` is explicitly set to `true`;
-validation runs independently. Checked-in rules and workflows must be activated
-in GitHub before they enforce remote policy or publish content.
+GitHub Pages and repository permissions must be configured before the first
+release. Follow [deployment setup](maintenance/deployment.md) to activate Pages,
+required checks, and Release Please. A normal push or merge does not deploy the
+website: publication requires a stable GitHub release.
 
 ## Quick start
 
@@ -37,6 +35,7 @@ zensical serve
 Dependency installation is usually 1–3 minutes; the preview runs until Ctrl-C.
 Open the URL printed by Zensical. To produce portable static output, run
 `zensical build --strict`; success produces `site/index.html` and product pages.
+Python is used for building and validation, not by visitors to the published site.
 
 Every commit and PR title **must follow Conventional Commits**. Start with
 [CONTRIBUTING.md](CONTRIBUTING.md) for the exact policy, examples, hooks, article
@@ -52,10 +51,12 @@ standards, and review process.
 | `docs/assets/` | Shared and product branding/media |
 | `zensical.toml` | Site metadata, explicit navigation, theme, strict link validation |
 | `templates/` | Article, category, and FAQ templates; not published |
-| `scripts/` and `tests/` | Content and commit validation |
+| `scripts/` and `tests/` | Content, commit, and release validation |
 | `.githooks/` | Local commit-message enforcement |
-| `.github/workflows/` | PR validation, commit checks, production deployment |
+| `.github/workflows/` | PR validation, Release Please, and release-only Pages deployment |
 | `.github/rulesets/main.json` | Required review/check policy to apply in GitHub |
+| `release-please-config.json` | Release strategy and changelog sections |
+| `.release-please-manifest.json`, `version.txt`, `CHANGELOG.md` | Release Please's version and release history |
 | `maintenance/` | Hosting and asset maintenance instructions; not published |
 
 ## Short checks
@@ -69,25 +70,32 @@ python3 scripts/validate-content.py
 
 After installation, use `zensical build --strict` to verify the actual renderer
 and link anchors. CI runs the same checks and retains the generated website as
-an artifact for seven days. Production deployment repeats validation before
-uploading `site/` to Cloudflare Pages.
+an artifact for seven days. Release deployment validates and builds the released
+commit before uploading `site/` to GitHub Pages.
 
-## Publishing and status
+## Releases and publishing
 
-Follow [maintenance/deployment.md](maintenance/deployment.md) in order: verify
-locally, push the initial source, activate GitHub rules, configure Cloudflare,
-then enable deployment and attach the domain. The initial push validates the
-site while production deployment stays disabled. Once hosting is configured and
-the repository variable `DEPLOYMENTS_ENABLED` is `true`, reviewed merges deploy
-automatically.
+1. Merge reviewed content or code changes into `main`.
+2. Release Please creates or updates a release PR containing the version and
+   changelog changes. Ordinary merges leave the published site unchanged.
+3. Review the release PR, approve its workflows if GitHub requests it, and pass
+   the required checks. Keep the bot's PR as a single commit.
+4. Use **Rebase and merge**. Release Please publishes the stable `vX.Y.Z` release;
+   only then does the Pages deployment run.
 
-Set that variable to `false` to prevent future deployment jobs from starting;
-this does not cancel an in-progress job or remove the published site. View
-[GitHub Actions](https://github.com/IYBA-ORG/help-center/actions) or run this
-one-shot status command; no polling is required:
+The initial release is `v1.0.0`. Later documentation-only changes are eligible
+for patch releases. Draft releases, prereleases, tag-only pushes, and outdated
+release reruns cannot publish the site. The workflows use the built-in
+`GITHUB_TOKEN`; no personal access token or external hosting credentials are
+required. See the [runbook](maintenance/deployment.md) for setup, recovery,
+and optional `help.iyba.org` DNS configuration.
+
+View [GitHub Actions](https://github.com/IYBA-ORG/help-center/actions) or use
+these one-shot status commands instead of watching or polling jobs:
 
 ```bash
 gh run list --repo IYBA-ORG/help-center --limit 5
+gh release list --repo IYBA-ORG/help-center --limit 5
 ```
 
 Phase 3 will add verified workflows and screenshots. Phase 4 will complete
