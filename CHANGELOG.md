@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/IYBA-ORG/help-center/compare/v1.0.1...v1.0.2) (2026-11-13)
+
+
+### Documentation
+
+* **yachtbroker:** clarify CRM integration and illustrate testing ([d1e0248](https://github.com/IYBA-ORG/help-center/commit/d1e02480ab3b962bc5159506d0460135a5ef6974))
+
 ## [1.0.1](https://github.com/IYBA-ORG/help-center/compare/v1.0.0...v1.0.1) (2026-11-12)
 
 
