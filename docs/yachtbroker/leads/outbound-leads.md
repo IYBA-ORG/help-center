@@ -13,11 +13,7 @@ This guide is for **company administrators and their CRM or integration partners
 
 ## How It Works
 
-1. A visitor submits an inquiry through a connected Yachtr form.
-2. MLS saves the inquiry, identifies the listing’s brokerage, and prepares the
-   fields in that brokerage’s saved mapping.
-3. MLS sends the information to your receiving service as JSON over HTTPS.
-4. Your receiving service creates or updates the CRM records your team uses.
+![Test connection](../../assets/yachtbroker/how-it-works.png)
 
 Your connection receives inquiries routed to your brokerage, not every inquiry
 across Yachtr. Delivery runs in the background, and there is **one saved
