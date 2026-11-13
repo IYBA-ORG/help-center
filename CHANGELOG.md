@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.3](https://github.com/IYBA-ORG/help-center/compare/v1.0.2...v1.0.3) (2026-11-13)
+
+
+### Documentation
+
+* update how it works chart ([15ab278](https://github.com/IYBA-ORG/help-center/commit/15ab278e2f0aa8998713f3dac0170e6066c4aa42))
+
+
+### Maintenance
+
+* add how it works image ([4b886c1](https://github.com/IYBA-ORG/help-center/commit/4b886c109bd16e46069ed45c2b70c6b75c7d889b))
+
 ## [1.0.2](https://github.com/IYBA-ORG/help-center/compare/v1.0.1...v1.0.2) (2026-11-13)
 
 
