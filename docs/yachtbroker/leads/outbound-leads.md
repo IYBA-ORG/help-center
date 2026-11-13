@@ -30,15 +30,14 @@ into your CRM’s format.
 
 ??? info "Using HubSpot or another CRM"
 
-    This integration sends a flat JSON object using HTTPS POST. There is no
-    **Connect your HubSpot account** sign-in flow. Your receiving service handles
-    CRM authorization, contact matching, field conversion, and any deal or
-    activity creation.
+    This integration sends a flat JSON object using HTTPS POST. Your receiving
+    service handles CRM authorization, contact matching, field conversion, and
+    any deal or activity creation.
 
-    The mapper supports top-level fields, not nested objects or arrays. HubSpot’s
-    contacts API expects fields inside a `properties` object, so a receiving
-    service must transform the payload before calling that API. A CRM endpoint
-    that already accepts your configured format may receive requests directly.
+    Third-party CRM APIs may expect nested fields, so your receiving service may
+    need to transform the payload received from the YachtBroker MLS API before
+    forwarding it to the CRM. A CRM endpoint that already accepts your configured
+    format may receive requests directly.
 
     MLS supports a fixed Bearer token or a token in a named request header. Your
     receiving service handles any downstream OAuth authorization or token refresh.
@@ -152,6 +151,8 @@ existing inquiries.
 Select **Test integration**. It works while live delivery is disabled and sends
 a real request containing synthetic contact and listing values. Configured
 constants are sent exactly as saved.
+
+![Test connection](../../assets/yachtbroker/integration_status.gif)
 
 !!! warning "Tests may create real CRM records"
 
